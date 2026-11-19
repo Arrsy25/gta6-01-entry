@@ -14,16 +14,21 @@ const BUILDING_COLORS = [0xe8dcc8, 0xd9a066, 0x7fb3a8, 0xc96f4a, 0xf2ead8, 0x9db
 const CAR_SPOT_COLORS = [0xc0392b, 0x2e86c1, 0xf1c40f, 0xecf0f1, 0x1abc9c, 0x8e44ad, 0xe67e22];
 
 function makeWindowTexture() {
+  // Light concrete base so the building's tint color shows; windows are
+  // dark glass with some lit amber, so facades read as sunlit walls.
   const c = document.createElement('canvas');
   c.width = 128;
   c.height = 256;
   const g = c.getContext('2d');
-  g.fillStyle = '#20242c';
+  g.fillStyle = '#ddd6c4';
   g.fillRect(0, 0, 128, 256);
+  // Subtle floor shading.
+  g.fillStyle = 'rgba(0,0,0,0.08)';
+  for (let y = 0; y < 16; y += 2) g.fillRect(0, y * 16, 128, 2);
   for (let y = 0; y < 16; y++) {
     for (let x = 0; x < 8; x++) {
       const lit = Math.random() < 0.35;
-      g.fillStyle = lit ? '#ffd98a' : '#3a4a5c';
+      g.fillStyle = lit ? '#ffd98a' : '#42566e';
       g.fillRect(6 + x * 15, 8 + y * 15, 9, 10);
     }
   }
@@ -258,13 +263,14 @@ export function buildCity(scene) {
     parkedSpots.push({
       x: horizontal ? along : road + pick([-3.4, 3.4]),
       z: horizontal ? road + pick([-3.4, 3.4]) : along,
-      heading: horizontal ? pick([0, Math.PI]) : pick([Math.PI / 2, -Math.PI / 2]),
+      // Heading follows the road: east/west on a horizontal road, north/south on a vertical one.
+      heading: horizontal ? pick([Math.PI / 2, -Math.PI / 2]) : pick([0, Math.PI]),
       color: pick(CAR_SPOT_COLORS),
     });
   }
   // Keep parked spots off the pier and off mission markers.
   const spots = {
-    playerSpawn: { x: 0, z: 100, heading: Math.PI },
+    playerSpawn: { x: 24, z: 120, heading: Math.PI },
     docks: { x: 0, z: OCEAN_Z - 8 },
     market: { x: 48, z: 48 },
     garage: { x: -48, z: -48 },

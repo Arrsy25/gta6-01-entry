@@ -19,19 +19,21 @@ const SAVE_KEY = 'neonbay-save-v1';
 const game = {
   state: 'menu', // menu | playing | busted | wasted | paused
   cash: 0,
-  cameraYaw: Math.PI,
+  cameraYaw: 0,
   cameraPitch: 0.32,
   trauma: 0,
   saveTimer: 0,
 };
 
 function boot() {
+  const params = new URLSearchParams(window.location.search);
+  const lowFx = params.get('lowfx') === '1';
   const container = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(lowFx ? 1 : Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = !lowFx;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -280,9 +282,17 @@ function boot() {
 
   // ---- Main loop ----
   const clock = new THREE.Clock();
+  let fpsFrames = 0, fpsLast = performance.now(), fpsValue = 0;
   function frame() {
     requestAnimationFrame(frame);
     const dt = Math.min(clock.getDelta(), 0.05);
+    fpsFrames++;
+    const now = performance.now();
+    if (now - fpsLast >= 1000) {
+      fpsValue = Math.round((fpsFrames * 1000) / (now - fpsLast));
+      fpsFrames = 0;
+      fpsLast = now;
+    }
     const inputFrame = input.poll();
     const inMenu = game.state === 'menu';
 
@@ -345,6 +355,10 @@ function boot() {
           }
         }
       }
+      // While driving, the player's position rides with the car so every
+      // system that reads player.pos (missions, police, traffic, pickups,
+      // minimap) sees where the player actually is.
+      if (player.currentCar) player.pos.copy(player.currentCar.pos);
       traffic.update(dt, player.pos, allCars());
       wanted.update(dt, player, allCars());
       missions.update(dt, player, wanted);
@@ -415,12 +429,14 @@ function boot() {
     get cash() { return game.cash; },
     set cash(v) { game.cash = v; },
     get state() { return game.state; },
+    get fps() { return fpsValue; },
+    get cameraYaw() { return game.cameraYaw; },
+    set cameraYaw(v) { game.cameraYaw = v; },
     version: 'neonbay-1',
   };
   window.__game = api;
 
   // Screenshot staging (?shot=start|drive|chase|mission).
-  const params = new URLSearchParams(window.location.search);
   applyShot(api, params);
 
   frame();

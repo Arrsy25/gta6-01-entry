@@ -101,8 +101,9 @@ export class WantedManager {
       const dist = Math.hypot(dx, dz);
       const desired = Math.atan2(dx, dz);
       const steer = clamp(angleDiff(cop.heading, desired) * 1.8, -1, 1);
-      // Ease off right on top of the player so the car can actually touch them.
-      const throttle = dist < 4 ? 0.35 : 1;
+      // On top of the player: stop and arrest instead of ramming past them,
+      // so the busted timer can run. In a car, keep nosing in to ram.
+      const throttle = dist < 5 ? (player.currentCar ? 0.35 : -0.6) : 1;
       cop.drive(dt, { throttle, steer, handbrake: false }, this.colliders, allCars);
     }
     // Remove wrecked police cars after a while, and extras when stars fall.

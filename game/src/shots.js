@@ -35,19 +35,24 @@ export function applyShot(game, params) {
       game.player.currentCar.speed = 16;
     }
     game.setWanted(3);
-    // Pull two police cars close behind the player.
+    // Pull two police cars into the frame ahead of the player, driving
+    // toward them — the chase camera looks forward, so cops behind the car
+    // would never be seen.
     for (let i = 0; i < 2; i++) {
       const cop = game.police.spawnPoliceNear(game.player.pos);
-      cop.pos.set(24 + (i === 0 ? -6 : 5), 0, -24 - 14 - i * 8);
-      cop.heading = 0;
-      cop.speed = 14;
+      cop.pos.set(24 + (i === 0 ? -5 : 4), 0, -24 + 16 + i * 10);
+      cop.heading = Math.PI;
+      cop.speed = 12;
     }
     return true;
   }
   if (shot === 'mission') {
     game.missions.startMission(1);
-    game.player.teleport(48, 30, Math.PI);
-    game.player.pos.set(48, 0, 30);
+    // On the road west of the market (48,48), facing east toward it, camera
+    // behind the player — the yellow beacon and the market are in frame.
+    game.player.teleport(24, 48, Math.PI / 2);
+    game.player.pos.set(24, 0, 48);
+    game.cameraYaw = -Math.PI / 2;
     return true;
   }
   return false;

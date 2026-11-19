@@ -62,7 +62,7 @@ export class MissionManager {
       new THREE.OctahedronGeometry(0.9),
       new THREE.MeshBasicMaterial({ color: 0xffd34d }),
     );
-    diamond.position.y = 6;
+    diamond.position.y = 26;
     this.marker.add(diamond);
     this.diamond = diamond;
     this.marker.visible = false;
@@ -122,7 +122,7 @@ export class MissionManager {
 
   update(dt, player, wanted) {
     this.diamond.rotation.y += dt * 2;
-    this.diamond.position.y = 6 + Math.sin(Date.now() * 0.002) * 0.5;
+    this.diamond.position.y = 26 + Math.sin(Date.now() * 0.002) * 0.5;
     if (this.done) return;
     const step = this.currentStep();
     if (!step) return;
@@ -130,7 +130,10 @@ export class MissionManager {
       this.completeStep(player, wanted);
     } else if (step.check === 'atMarker' && step.marker) {
       const s = this.spots[step.marker];
-      if (dist2(player.pos.x, player.pos.z, s.x, s.z) < step.radius) {
+      // While driving, the player's own position is frozen where they got in —
+      // the mission target must be measured from the car they are driving.
+      const eff = player.currentCar ? player.currentCar.pos : player.pos;
+      if (dist2(eff.x, eff.z, s.x, s.z) < step.radius) {
         if (this.missionIndex === 1 && this.stepIndex === 0) this.packageHeld = true;
         if (this.missionIndex === 1 && this.stepIndex === 1) this.packageHeld = false;
         this.completeStep(player, wanted);
